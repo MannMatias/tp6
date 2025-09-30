@@ -54,5 +54,5 @@ describe("US-9: Logout", () => {
     cy.contains(sel.header, /contact list/i).should("not.exist");
   });
 
-G
+
 });
