@@ -1,211 +1,92 @@
 /// <reference types="cypress" />
 
-describe('Registro de usuario - casos negativos', () => {
-    beforeEach(() => {
-      cy.visit('https://thinking-tester-contact-list.herokuapp.com/');
-      cy.get('button').contains(/^Sign up$/i).click();
-    });
+// Helpers básicos
+const BASE_URL = 'https://thinking-tester-contact-list.herokuapp.com/';
 
-    it('muestra error si falta el First Name', () => {
-      // Llenar todos los campos excepto firstName
-      cy.get('#lastName').type('Mann');
-      cy.get('#email').type(`mati_${Date.now()}@example.com`);
-      cy.get('#password').type('Abcdef1!');
-      
-      cy.get('button[type="submit"]').click();
+const selectors = {
+  email: '#email',            // Ajustar si cambia
+  password: '#password',      // Ajustar si cambia
+  submit: '#submit',          // Ajustar si cambia
+  error: '#error',            // Ajustar si cambia
+  contactsHeader: 'h1',       // "Contact List" al ingresar
+  logoutBtn: '#logout'        // Ajustar si cambia
+};
 
-      // Verificar que aparezca un mensaje de error
-      cy.get('body').should('contain.text', 'firstName: Path `firstName` is required');
-      
-      // Verificar que no se haya redirigido
-      cy.url().should('include', 'addUser');
-    });
+// Para no versionar credenciales, usá cypress.env.json (EMAIL y PASSWORD)
+// o variables de entorno del runner.
+const VALID_EMAIL = Cypress.env('EMAIL') || 'usuario.demo+login@tester.com';
+const VALID_PASSWORD = Cypress.env('PASSWORD') || 'Demo1234!';
 
-    it('muestra error si falta el Last Name', () => {
-      // Llenar todos los campos excepto lastName
-      cy.get('#firstName').type('Matias');
-      cy.get('#email').type(`mati_${Date.now()}@example.com`);
-      cy.get('#password').type('Abcdef1!');
-      
-      cy.get('button[type="submit"]').click();
-
-      // Verificar que aparezca un mensaje de error
-      cy.get('body').should('contain.text', 'lastName: Path `lastName` is required');
-      
-      // Verificar que no se haya redirigido
-      cy.url().should('include', 'addUser');
-    });
-
-    it('muestra error si falta el Email', () => {
-      // Llenar todos los campos excepto email
-      cy.get('#firstName').type('Matias');
-      cy.get('#lastName').type('Mann');
-      cy.get('#password').type('Abcdef1!');
-      
-      cy.get('button[type="submit"]').click();
-
-      // Verificar que aparezca un mensaje de error
-      cy.get('body').should('contain.text', 'email: Email is invalid');
-      
-      // Verificar que no se haya redirigido
-      cy.url().should('include', 'addUser');
-    });
-
-    it('muestra error si falta el Password', () => {
-      // Llenar todos los campos excepto password
-      cy.get('#firstName').type('Matias');
-      cy.get('#lastName').type('Mann');
-      cy.get('#email').type(`mati_${Date.now()}@example.com`);
-      
-      cy.get('button[type="submit"]').click();
-
-      // Verificar que aparezca un mensaje de error
-      cy.get('body').should('contain.text', 'password: Path `password` is required');
-      
-      // Verificar que no se haya redirigido
-      cy.url().should('include', 'addUser');
-    });
-
-    it('muestra error si el Email no tiene formato válido', () => {
-      // Llenar formulario con email inválido
-      cy.get('#firstName').type('Matias');
-      cy.get('#lastName').type('Mann');
-      cy.get('#email').type('correo_sin_arroba');
-      cy.get('#password').type('Abcdef1!');
-      
-      cy.get('button[type="submit"]').click();
-
-      // Verificar que aparezca un mensaje de error de email inválido
-      cy.get('body').should('contain.text', 'email: Email is invalid');
-      
-      // Verificar que no se haya redirigido
-      cy.url().should('include', 'addUser');
-    });
-
-    it('muestra error si la contraseña es demasiado débil', () => {
-      // Llenar formulario con contraseña débil
-      cy.get('#firstName').type('Matias');
-      cy.get('#lastName').type('Mann');
-      cy.get('#email').type(`mati_${Date.now()}@example.com`);
-      cy.get('#password').type('123');
-      
-      cy.get('button[type="submit"]').click();
-
-      // Verificar que aparezca un mensaje de error de contraseña débil
-      cy.get('body').should('contain.text', 'is shorter than the minimum allowed length (7)');
-      
-      // Verificar que no se haya redirigido
-      cy.url().should('include', 'addUser');
-    });
-
-    it('verifica que el formulario no se envíe con campos vacíos', () => {
-      // Intentar enviar el formulario sin llenar nada
-      cy.get('button[type="submit"]').click();
-      
-      // Verificar que aparezcan múltiples mensajes de error
-      cy.get('body').should('contain.text', 'User validation failed');
-      
-      // Verificar que no se haya redirigido
-      cy.url().should('include', 'addUser');
-    });
+describe('Inicio de sesión - Contact List App', () => {
+  beforeEach(() => {
+    cy.visit(BASE_URL);
+    // Asegura que estamos en la pantalla de Login
+    cy.contains('Log In', { matchCase: false }).should('be.visible');
   });
 
-  describe('Registro de usuario - casos positivos', () => {
-    beforeEach(() => {
-      cy.visit('https://thinking-tester-contact-list.herokuapp.com/');
-      cy.get('button').contains(/^Sign up$/i).click();
-    });
+  it('AC1 + AC4: con credenciales válidas inicia sesión y accede al módulo de contactos', () => {
+    // Completar el form
+    cy.get(selectors.email).should('be.visible').clear().type(VALID_EMAIL);
+    cy.get(selectors.password).should('be.visible').clear().type(VALID_PASSWORD);
 
-    it('registra un usuario exitosamente con datos válidos', () => {
-      const unique = Date.now();
-      const email = `mati_${unique}@example.com`;
-      
-      // Llenar todos los campos con datos válidos
-      cy.get('#firstName').type('Matias');
-      cy.get('#lastName').type('Mann');
-      cy.get('#email').type(email);
-      cy.get('#password').type('Abcdef1!');
-      
-      cy.get('button[type="submit"]').click();
+    // Enviar
+    cy.get(selectors.submit).should('be.enabled').click();
 
-      // Verificar que se haya redirigido a la página de contactos
-      cy.url().should('include', '/contactList');
-      
-      // Verificar que aparezca un mensaje de éxito o la página de contactos
-      cy.get('body').should('contain.text', 'Contact');
-    });
-
-    it('registra un usuario con email válido y contraseña fuerte', () => {
-      const unique = Date.now();
-      const email = `test_${unique}@gmail.com`;
-      
-      // Llenar formulario con email válido y contraseña fuerte
-      cy.get('#firstName').type('Juan');
-      cy.get('#lastName').type('Perez');
-      cy.get('#email').type(email);
-      cy.get('#password').type('MySecure123!');
-      
-      cy.get('button[type="submit"]').click();
-
-      // Verificar que se haya redirigido exitosamente
-      cy.url().should('not.include', 'addUser');
-      cy.url().should('include', '/contactList');
-    });
-
-    it('registra un usuario con nombres largos', () => {
-      const unique = Date.now();
-      const email = `longname_${unique}@example.com`;
-      
-      // Llenar formulario con nombres largos
-      cy.get('#firstName').type('Alejandro Fernando');
-      cy.get('#lastName').type('Gonzalez Rodriguez');
-      cy.get('#email').type(email);
-      cy.get('#password').type('StrongPass456!');
-      
-      cy.get('button[type="submit"]').click();
-
-      // Verificar que se haya registrado exitosamente
-      cy.url().should('include', '/contactList');
-    });
-
-    it('registra un usuario con email corporativo', () => {
-      const unique = Date.now();
-      const email = `usuario_${unique}@empresa.com.ar`;
-      
-      // Llenar formulario con email corporativo
-      cy.get('#firstName').type('Carlos');
-      cy.get('#lastName').type('Lopez');
-      cy.get('#email').type(email);
-      cy.get('#password').type('CorpPass789!');
-      
-      cy.get('button[type="submit"]').click();
-
-      // Verificar que se haya registrado exitosamente
-      cy.url().should('include', '/contactList');
-    });
-
-    it('verifica que los campos se llenen correctamente', () => {
-      const unique = Date.now();
-      const email = `verify_${unique}@test.com`;
-      
-      // Llenar cada campo individualmente y verificar
-      cy.get('#firstName').type('Verificar');
-      cy.get('#firstName').should('have.value', 'Verificar');
-      
-      cy.get('#lastName').type('Campos');
-      cy.get('#lastName').should('have.value', 'Campos');
-      
-      cy.get('#email').type(email);
-      cy.get('#email').should('have.value', email);
-      
-      cy.get('#password').type('TestPass123!');
-      cy.get('#password').should('have.value', 'TestPass123!');
-      
-      // Enviar formulario
-      cy.get('button[type="submit"]').click();
-      
-      // Verificar registro exitoso
-      cy.url().should('include', '/contactList');
-    });
+    // Verificación: aterriza en Contact List (módulo de contactos)
+    cy.url().should('include', '/contactList'); // La app suele redirigir a /contactList
+    cy.contains('Contact List').should('be.visible'); // Header presente
+    // Smoke: existe botón para agregar contacto o logout
+    cy.contains(/add a new contact/i).should('exist');
+    cy.get(selectors.logout).should('exist');
   });
-  
+
+  it('AC2: con credenciales inválidas muestra mensaje de error', () => {
+    const wrongPass = 'ClaveInvalida!1';
+    cy.get(selectors.email).clear().type(VALID_EMAIL);
+    cy.get(selectors.password).clear().type(wrongPass);
+    cy.get(selectors.submit).click();
+
+    // Mensaje de error visible (típicamente #error con texto "Incorrect username or password")
+    cy.get(selectors.error)
+      .should('be.visible')
+      .and(($el) => {
+        const txt = $el.text().toLowerCase();
+        expect(
+          txt.includes('incorrect') || txt.includes('error') || txt.includes('inválid')
+        ).to.eq(true);
+      });
+
+    // No debe navegar al módulo de contactos
+    cy.url().should('not.include', '/contactList');
+    cy.contains('Contact List').should('not.exist');
+  });
+
+  it('Validación de campos del Login (form vació o email inválido impide enviar)', () => {
+    // Submit vacío
+    cy.get(selectors.submit).click();
+    // El navegador suele marcar required, así que seguimos en login
+    cy.url().should('eq', BASE_URL);
+
+    // Email inválido
+    cy.get(selectors.email).clear().type('no-es-un-email');
+    cy.get(selectors.password).clear().type('Algo1234!');
+    cy.get(selectors.submit).click();
+
+    // De nuevo, nos quedamos en login; si el sitio usa validación nativa, no envía
+    cy.url().should('eq', BASE_URL);
+  });
+
+  it.skip('AC3: no permite iniciar sesión si la cuenta no está verificada (escenario de negocio)', () => {
+    /**
+     * NOTA IMPORTANTE PARA EL INFORME:
+     * El entorno demo público no implementa flujo de verificación de email,
+     * por lo que no es posible reproducir este AC de forma real end-to-end.
+     *
+     * Cómo validarlo en un proyecto real:
+     * - Preparar usuario estado "unverified" vía API/fixture.
+     * - Intentar login y esperar mensaje "Debes verificar tu email" y rechazo.
+     *
+     * Dejo el test marcado como skip para documentar el gap entre requerimiento y el sandbox.
+     */
+  });
+});
