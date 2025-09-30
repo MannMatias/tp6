@@ -40,6 +40,9 @@ describe("Edición de contacto", () => {
     cy.contains("Carlos Pérez").click();
     cy.get("#edit-contact").click();
 
+    // Esperar 2 segundos antes de la edición
+    cy.wait(1000);
+
     // Cambiar valores
     cy.get("#firstName").click().type("{selectall}{backspace}Carla");
     cy.get("#lastName").click().type("{selectall}{backspace}Gómez");
